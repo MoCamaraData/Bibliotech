@@ -1,380 +1,212 @@
-// =========================
-
-// VARIABLES GLOBALES
-
-// =========================
- 
- 
-let DATA_BASE = [];
-
-let x = 0; 
-
-const STORAGE_KEY = "biblio_db_final";
- 
+const STORAGE_KEY = "biblioDb";
+let booksDatabase = [];
+let nextId = 0;
  
 // =========================
-
-// CHARGEMENT SÉCURISÉ
-
+// UTILITAIRES
 // =========================
  
+const mapCategory = (value) => {
+  const categories = {
+    "1": "Science-Fiction",
+    "2": "Documentaire",
+    "3": "Roman",
+  };
+  return categories[value] || "Autre";
+};
  
-function LancerApplication() {
-
-   try {
-
-       const raw = localStorage.getItem(STORAGE_KEY);
-
-       if (raw) {
-
-           const parsed = JSON.parse(raw); // Remplace eval()
-
-           if (Array.isArray(parsed)) {
-
-               DATA_BASE = parsed;
+const validateForm = (title, author, isbn) => {
+  if (!title.trim()) return "Erreur : Titre obligatoire.";
+  if (!author.trim()) return "Erreur : Auteur obligatoire.";
+  if (!isbn.trim() || isbn.length < 4) return "Erreur : ISBN invalide (min 4 caractères).";
+  return "";
+};
  
- 
-               const ids = DATA_BASE.map(item => item.uid);
-
-               x = ids.length ? Math.max(...ids) : 0;
-
-           }
-
-       }
-
-   } catch (e) {
-
-       console.error("Erreur de parsing localStorage :", e);
-
-       DATA_BASE = [];
-
-       x = 0;
-
-   }
- 
- 
-   Display();
-
-}
- 
+const sauvegarder_le_tout = () => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(booksDatabase));
+  } catch (e) {
+    console.error("Erreur sauvegarde :", e);
+  }
+};
  
 // =========================
-
-// VALIDATION FORMULAIRE
-
+// CHARGEMENT & INIT
 // =========================
  
+const LancerApplication = () => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        booksDatabase = parsed;
+        const ids = booksDatabase.map((book) => book.uid);
+        nextId = ids.length ? Math.max(...ids) : 0;
+      }
+    }
+  } catch (e) {
+    console.error("Erreur de parsing localStorage :", e);
+    booksDatabase = [];
+    nextId = 0;
+  }
  
-function validateForm(v1, v2, v4) {
-
-   if (!v1.trim()) return "Erreur : Titre obligatoire.";
-
-   if (!v2.trim()) return "Erreur : Auteur obligatoire.";
-
-   if (!v4.trim() || v4.length < 4) return "Erreur : ISBN invalide.";
-
-   return "";
-
-}
- 
- 
-// =========================
-
-// SAUVEGARDE
-
-// =========================
- 
- 
-function sauvegarder_le_tout() {
-
-   try {
-
-       localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA_BASE));
-
-   } catch (e) {
-
-       console.error("Erreur sauvegarde :", e);
-
-   }
-
-}
- 
+  Display();
+};
  
 // =========================
-
-// AJOUT D’UN LIVRE (SÉCURISÉ)
-
+// AJOUT DE LIVRE
 // =========================
  
+const Excecute_Save_Data_To_Memory = () => {
+  const title = document.getElementById("inp_A").value;
+  const author = document.getElementById("inp_B").value;
+  const categoryValue = document.getElementById("sel_X").value;
+  const isbn = document.getElementById("inp_C").value;
  
-function Excecute_Save_Data_To_Memory() {
-
-   const v1 = document.getElementById("inp_A").value;
-
-   const v2 = document.getElementById("inp_B").value;
-
-   const v3 = document.getElementById("sel_X").value;
-
-   const v4 = document.getElementById("inp_C").value;
+  const validationMessage = validateForm(title, author, isbn);
+  if (validationMessage !== "") {
+    alert(validationMessage);
+    return;
+  }
  
+  nextId += 1;
  
-   const validation = validateForm(v1, v2, v4);
-
-   if (validation !== "") {
-
-       alert(validation);
-
-       return;
-
-   }
+  const today = new Date();
+  const createdAt =
+    today.getDate() +
+    "/" +
+    (today.getMonth() + 1) +
+    "/" +
+    today.getFullYear();
  
+  const newBook = {
+    uid: nextId,
+    Name: title.trim(),
+    auteur_name: author.trim(),
+    k: mapCategory(categoryValue),
+    stuff: isbn.trim() + " | " + createdAt,
+    is_dead: false,
+  };
  
-   x++;
+  booksDatabase.push(newBook);
+  sauvegarder_le_tout();
+  Display();
  
+  document.getElementById("inp_A").value = "";
+  document.getElementById("inp_B").value = "";
+  document.getElementById("inp_C").value = "";
  
-   const ajd = new Date();
-
-   const string = ajd.getDate() + "/" + (ajd.getMonth() + 1) + "/" + ajd.getFullYear();
- 
- 
-   let label = "";
-
-   if (v3 === "1") label = "Science-Fiction";
-
-   else if (v3 === "2") label = "Documentaire";
-
-   else label = "Roman";
- 
- 
-   const Thing = {
-
-       uid: x,
-
-       Name: v1.trim(),
-
-       auteur_name: v2.trim(),
-
-       k: label,
-
-       stuff: v4.trim() + " | " + string,
-
-       is_dead: false
-
-   };
- 
- 
-   DATA_BASE.push(Thing);
-
-   sauvegarder_le_tout();
-
-   Display();
- 
- 
-   document.getElementById("inp_A").value = "";
-
-   document.getElementById("inp_B").value = "";
-
-   document.getElementById("inp_C").value = "";
- 
- 
-   alert_user("C'est bon");
-
-}
- 
+  alert_user("Livre enregistré.");
+};
  
 // =========================
-
-// AFFICHAGE (sécurisé contre XSS)
-
+// AFFICHAGE & RECHERCHE
 // =========================
  
+const Display = () => {
+  const tbody = document.getElementById("corps_du_tableau");
+  tbody.innerHTML = "";
  
-function Display() {
-
-   const el = document.getElementById("corps_du_tableau");
-
-   el.innerHTML = ""; // reset tableau sécurisé
+  let count = 0;
  
+  booksDatabase.forEach((book) => {
+    if (book.is_dead) return;
  
-   let count = 0;
+    count++;
  
+    const tr = document.createElement("tr");
  
-   DATA_BASE.forEach(o => {
-
-       if (!o.is_dead) {
-
-           count++;
+    const tdNum = document.createElement("td");
+    tdNum.textContent = "#" + book.uid;
+    tr.appendChild(tdNum);
  
+    const tdInfo = document.createElement("td");
+    const titleElement = document.createElement("b");
+    titleElement.textContent = book.Name.toUpperCase();
+    const br = document.createElement("br");
+    const authorElement = document.createElement("i");
+    authorElement.textContent = book.auteur_name;
+    tdInfo.append(titleElement, br, authorElement);
+    tr.appendChild(tdInfo);
  
-           const tr = document.createElement("tr");
+    const tdCategory = document.createElement("td");
+    const categorySpan = document.createElement("span");
+    categorySpan.style.background = "white";
+    categorySpan.style.color = "black";
+    categorySpan.style.padding = "2px";
+    categorySpan.textContent = book.k;
+    tdCategory.appendChild(categorySpan);
+    tr.appendChild(tdCategory);
  
+    const tdDetails = document.createElement("td");
+    tdDetails.textContent = book.stuff;
+    tr.appendChild(tdDetails);
  
-           // uid
-
-           const tdNum = document.createElement("td");
-
-           tdNum.textContent = "#" + o.uid;
-
-           tr.appendChild(tdNum);
+    const tdDelete = document.createElement("td");
+    const deleteButton = document.createElement("button");
+    deleteButton.className = "btn-del";
+    deleteButton.textContent = "X";
+    deleteButton.onclick = () => del(book.uid);
+    tdDelete.appendChild(deleteButton);
+    tr.appendChild(tdDelete);
  
+    tbody.appendChild(tr);
+  });
  
-           // titre + auteur
-
-           const tdInfo = document.createElement("td");
-
-           const b = document.createElement("b");
-
-           b.textContent = o.Name.toUpperCase();
-
-           const br = document.createElement("br");
-
-           const i = document.createElement("i");
-
-           i.textContent = o.auteur_name;
-
-           tdInfo.append(b, br, i);
-
-           tr.appendChild(tdInfo);
+  document.getElementById("cpt").textContent = count;
+};
  
+const regarder = (val) => {
+  const search = val.toUpperCase();
  
-           // catégorie
-
-           const tdCat = document.createElement("td");
-
-           const span = document.createElement("span");
-
-           span.style.background = "white";
-
-           span.style.color = "black";
-
-           span.style.padding = "2px";
-
-           span.textContent = o.k;
-
-           tdCat.appendChild(span);
-
-           tr.appendChild(tdCat);
+  const table = document.getElementById("tab");
+  const rows = table.getElementsByTagName("tr");
  
+  for (let i = 1; i < rows.length; i++) {
+    const cols = rows[i].getElementsByTagName("td");
+    if (!cols || cols.length < 4) continue;
  
-           // détails
-
-           const tdStuff = document.createElement("td");
-
-           tdStuff.textContent = o.stuff;
-
-           tr.appendChild(tdStuff);
+    const mainText =
+      (cols[1].textContent || "") +
+      " " +
+      (cols[2].textContent || "") +
+      " " +
+      (cols[3].textContent || "");
  
- 
-           // bouton delete
-
-           const tdDel = document.createElement("td");
-
-           const btn = document.createElement("button");
-
-           btn.className = "btn-del";
-
-           btn.textContent = "X";
-
-           btn.onclick = () => del(o.uid);
-
-           tdDel.appendChild(btn);
-
-           tr.appendChild(tdDel);
- 
- 
-           el.appendChild(tr);
-
-       }
-
-   });
- 
- 
-   document.getElementById("cpt").textContent = count;
-
-}
- 
+    rows[i].style.display = mainText.toUpperCase().includes(search)
+      ? ""
+      : "none";
+  }
+};
  
 // =========================
-
-// SUPPRESSION
-
+// SUPPRESSION & RESET
 // =========================
  
+const del = (id) => {
+  if (confirm("Supprimer ce livre ?")) {
+    booksDatabase = booksDatabase.filter((book) => book.uid !== id);
+    sauvegarder_le_tout();
+    Display();
+    alert_user("Livre supprimé.");
+  }
+};
  
-function del(id) {
-
-   if (confirm("Supprimer ?")) {
-
-       DATA_BASE = DATA_BASE.map(o =>
-
-           o.uid === id ? { ...o, is_dead: true } : o
-
-       );
+const alert_user = (msg) => {
+  const zone = document.getElementById("zone_m");
+  zone.textContent = msg;
+  setTimeout(() => {
+    zone.textContent = "";
+  }, 3000);
+};
  
+const kill = () => {
+  if (!confirm("Réinitialiser toute la base de données ?")) return;
  
-       sauvegarder_le_tout();
-
-       Display();
-
-   }
-
-}
- 
- 
-// =========================
-
-// RECHERCHE
-
-// =========================
- 
- 
-function regarder(val) {
-
-   const search = val.toUpperCase();
-
-   const t = document.getElementById("tab");
-
-   const rows = t.getElementsByTagName("tr");
- 
- 
-   for (let i = 1; i < rows.length; i++) {
-
-       const col = rows[i].getElementsByTagName("td")[1];
-
-       if (!col) continue;
- 
- 
-       const txt = col.textContent || col.innerText;
- 
- 
-       rows[i].style.display = txt.toUpperCase().includes(search)
-
-           ? ""
-
-           : "none";
-
-   }
-
-}
- 
- 
-function alert_user(msg) {
-
-   const z = document.getElementById("zone_m");
-
-   z.textContent = msg;
-
-   setTimeout(() => (z.textContent = ""), 3000);
-
-}
- 
- 
-function kill() {
-
-   localStorage.removeItem(STORAGE_KEY);
-
-   location.reload();
-
-}
-
- 
+  booksDatabase = [];
+  nextId = 0;
+  localStorage.removeItem(STORAGE_KEY);
+  Display();
+  alert_user("Base réinitialisée.");
+};
