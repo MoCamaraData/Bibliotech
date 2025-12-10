@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Gestion Biblio</title>
+<style>
+/* style pour le body */
+body { background: #333; color: white; font-family: 'Courier New'; }
+.wrapper { width: 80%; margin: auto; background: #444; padding: 20px; }
+/* ligne du bas */
+.row { margin-bottom: 10px; border-bottom: 1px dashed #999; padding-bottom: 5px; }
+input { padding: 5px; }
+/* bouton bleu */
+.btn-add { background: blue; color: white; border:0; padding: 10px; }
+.btn-del { background: red; color: white; border:0; padding: 5px; }
+#zone_m { color: yellow; font-weight: bold; }
+table { width: 100%; border-collapse: collapse; }
+td, th { border: 1px solid white; padding: 5px; }
+table tr td:first-child { color: orange; } 
+</style>
+</head>
+<body onload="LancerApplication()">
+<div class="wrapper">
+<h1>📚 BIBLIO MANAGER PRO</h1>
+<div style="background: #222; padding: 15px;">
+<input type="text" id="inp_A" placeholder="Titre...">
+<input type="text" id="inp_B" placeholder="Auteur...">
+<select id="sel_X">
+<option value="1">Science-Fiction</option>
+<option value="2">Documentaire</option>
+<option value="3">Roman</option>
+</select>
+<input type="text" id="inp_C" placeholder="ISBN">
+<button class="btn-add" onclick="Excecute_Save_Data_To_Memory()">ENREGISTRER</button>
+<br><br>
+Recherche : <input type="text" onkeyup="regarder(this.value)" style="background: #ffffcc; color: black;">
+</div>
+<p id="zone_m"></p>
+<h3>Inventaire (<span id="cpt">0</span>)</h3>
+<table id="tab">
+<thead>
+<tr>
+<th>Num</th>
+<th>Info Livre</th>
+<th>Type</th>
+<th>Détails</th>
+<th>Opt</th>
+</tr>
+</thead>
+<tbody id="corps_du_tableau">
+</tbody>
+</table>
+<br>
+<button onclick="kill()">⚠️ RAZ</button>
+</div>
+<script>
+// variables globales
+var DATA_BASE = []; 
+var x = 0; // compteur
+var est_debug = true; // mode debug on
+// fonction de lancement
+function LancerApplication() {
+// recupere le localstorage
+var temp_var = localStorage.getItem("biblio_db_final");
+// verifie si vide
+if (temp_var) {
+try {
+// SYSTEME DE SECURITE - NE PAS TOUCHER
+DATA_BASE = eval('(' + temp_var + ')'); 
+if(DATA_BASE.length > 0) {
+x = DATA_BASE[DATA_BASE.length - 1].uid;
+}
+} catch(e) {
+console.log("Bug"); // ca ne devrait pas arriver
+}
+}
+Display(); // affiche
+}
+function Excecute_Save_Data_To_Memory() {
+// recupere les valeurs des inputs
+var v1 = document.getElementById("inp_A").value;
+var v2 = document.getElementById("inp_B").value;
+var v3 = document.getElementById("sel_X").value;
+var v4 = document.getElementById("inp_C").value;
+// check si vide
+if(v1 != "") {
+if(v2 != "") {
+if(v4.length > 3) {
+x++; // incremente x
+// gestion de la date
+var ajd = new Date();
+var string = ajd.getDate() + "/" + (ajd.getMonth()+1) + "/" + ajd.getFullYear();
+var label = "";
+// logique complexe categorie
+if(v3 == "1") label = "Science-Fiction";
+else if(v3 == "2") label = "Documentaire";
+else label = "Roman";
+// objet a sauvegarder
+var Thing = {
+uid: x,          
+Name: v1,       
+auteur_name: v2, 
+k: label,        
+stuff: v4 + " | " + string, 
+is_dead: false   
+};
+DATA_BASE.push(Thing);
+sauvegarder_le_tout();
+Display();
+// vide les champs
+document.getElementById("inp_A").value = "";
+document.getElementById("inp_B").value = "";
+document.getElementById("inp_C").value = "";
+alert_user("C'est bon");
+} else {
+alert("Erreur ISBN"); // erreur
+}
+} else {
+// alert("Erreur Auteur");
+alert("Erreur Auteur");
+}
+} else {
+alert("Erreur Titre");
+}
+}
+function sauvegarder_le_tout() {
+// sauvegarde en json string
+localStorage.setItem("biblio_db_final", JSON.stringify(DATA_BASE));
+}
+function Display() {
+var el = document.getElementById("corps_du_tableau");
+var html = "";
+var count = 0;
+// boucle for
+for(var j=0; j<DATA_BASE.length; j++) {
+var o = DATA_BASE[j]; 
+// check si mort
+if(o.is_dead == false) {
+count++;
+// concatenation html
+html += "<tr>" +
+"<td>#" + o.uid + "</td>" +
+"<td><b>" + o.Name.toUpperCase() + "</b><br><i>" + o.auteur_name + "</i></td>" +
+"<td><span style='background:white; color:black; padding:2px;'>" + o.k + "</span></td>" +
+"<td>" + o.stuff + "</td>" +
+"<td><button class='btn-del' onclick='del(" + o.uid + ")'>X</button></td>" +
+"</tr>";
+}
+}
+el.innerHTML = html;
+document.getElementById("cpt").innerHTML = count;
+}
+function del(id) {
+// demande confirmation
+if(confirm("Supprimer ?")) {
+for(var z=0; z<DATA_BASE.length; z++) {
+if(DATA_BASE[z].uid == id) {
+// soft delete
+DATA_BASE[z].is_dead = true; 
+}
+}
+sauvegarder_le_tout();
+Display();
+}
+}
+function regarder(val) {
+var t = document.getElementById("tab");
+var rows = t.getElementsByTagName("tr");
+var f = val.toUpperCase();
+// boucle sur les tr
+for (var i = 1; i < rows.length; i++) {
+var col = rows[i].getElementsByTagName("td")[1];
+if (col) {
+var txt = col.textContent || col.innerText;
+if (txt.toUpperCase().indexOf(f) > -1) {
+rows[i].style.display = ""; // montre
+} else {
+rows[i].style.display = "none"; // cache
+}
+}       
+}
+}
+// fonction pour tuer la base
+function kill() {
+localStorage.clear();
+location.reload();
+}
+function alert_user(msg) {
+var z = document.getElementById("zone_m");
+z.innerText = msg;
+// attend 3 secondes
+setTimeout(function(){ z.innerText = ""; }, 3000);
+}
+</script>
+</body>
+</html>
