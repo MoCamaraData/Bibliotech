@@ -1,0 +1,105 @@
+/* Global */
+body {
+  background: #333;
+  color: #ffffff;
+  font-family: "Courier New", monospace;
+  margin: 0;
+  padding: 0;
+}
+
+.wrapper {
+  width: 80%;
+  margin: 20px auto;
+  background: #444;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* Formulaire */
+.form-container {
+  background: #222;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.form-container input,
+.form-container select {
+  padding: 5px;
+  margin-right: 5px;
+  margin-bottom: 5px;
+}
+
+.search-row {
+  margin-top: 10px;
+}
+
+.search-input {
+  background: #ffffcc;
+  color: #000000;
+  padding: 5px;
+}
+
+/* Boutons */
+.btn {
+  border: 0;
+  cursor: pointer;
+}
+
+.btn-add {
+  background: blue;
+  color: white;
+  padding: 10px;
+}
+
+.btn-delete {
+  background: red;
+  color: white;
+  padding: 5px 10px;
+}
+
+.btn-reset {
+  background: #666;
+  color: white;
+  padding: 8px 12px;
+}
+
+/* Messages */
+.message {
+  min-height: 18px;
+  font-weight: bold;
+  margin: 8px 0;
+}
+
+.message--success {
+  color: #7fff00;
+}
+
+.message--error {
+  color: #ff8080;
+}
+
+.message--info {
+  color: #ffff66;
+}
+
+/* Tableau */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+td,
+th {
+  border: 1px solid white;
+  padding: 5px;
+}
+
+table tr td:first-child {
+  color: orange;
+}
+
+.category-pill {
+  background: white;
+  color: black;
+  padding: 2px 4px;
+}
