@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Gestion Biblio</title>
+    <link rel="stylesheet" href="assets/css/style.css" />
+  </head>
+  <body>
+    <div class="wrapper">
+      <h1>📚 BIBLIO MANAGER PRO</h1>
+
+      <div class="form-container">
+        <input
+          type="text"
+          id="bookTitleInput"
+          placeholder="Titre..."
+          autocomplete="off"
+        />
+        <input
+          type="text"
+          id="authorInput"
+          placeholder="Auteur..."
+          autocomplete="off"
+        />
+        <select id="categorySelect">
+          <option value="1">Science-Fiction</option>
+          <option value="2">Documentaire</option>
+          <option value="3">Roman</option>
+        </select>
+        <input
+          type="text"
+          id="isbnInput"
+          placeholder="ISBN"
+          autocomplete="off"
+        />
+        <button class="btn btn-add" id="saveButton">ENREGISTRER</button>
+
+        <div class="search-row">
+          <label for="searchInput">Recherche :</label>
+          <input
+            type="text"
+            id="searchInput"
+            class="search-input"
+            placeholder="Titre, auteur, catégorie..."
+          />
+        </div>
+      </div>
+
+      <p id="messageZone" class="message"></p>
+
+      <h3>
+        Inventaire (<span id="booksCounter">0</span>)
+      </h3>
+
+      <table id="booksTable">
+        <thead>
+          <tr>
+            <th>Num</th>
+            <th>Info Livre</th>
+            <th>Type</th>
+            <th>Détails</th>
+            <th>Opt</th>
+          </tr>
+        </thead>
+        <tbody id="booksTableBody"></tbody>
+      </table>
+
+      <br />
+      <button class="btn btn-reset" id="resetButton">⚠️ RAZ</button>
+    </div>
+
+    <script src="assets/js/app.js"></script>
+  </body>
+</html>
